@@ -1,54 +1,48 @@
 package com.epam.mjc.io;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 
 public class FileReader {
 
     public Profile getDataFromFile(File file) {
-         
-        String name = null;
-        int age = 0;
-        String email = null;
-        long phone = 0L;
-        try (BufferedReader bufferedReader = new BufferedReader(new java.io.FileReader(file))){
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line);
-                stringBuilder.append(System.lineSeparator());
-            }
-            String fileContent = stringBuilder.toString();
+        String text = getStringFromFile(file);
+        return getProfileInfoFromText(text);
+    }
 
-            String[] lines = fileContent.split(System.lineSeparator());
-
-            for (String l : lines) {
-                String[] parts = l.split(":");
-                if (parts.length == 2) {
-                    String key = parts[0].trim();
-                    String value = parts[1].trim();
-                    switch (key) {
-                        case "Name":
-                            name = value;
-                            break;
-                        case "Age":
-                            age = Integer.parseInt(value);
-                            break;
-                        case "Email":
-                            email = value;
-                            break;
-                        case "Phone":
-                            phone = Long.parseLong(value);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
+    private String getStringFromFile(File file){
+        StringBuilder text = new StringBuilder();
+        try (FileInputStream input = new FileInputStream(file.getPath());){
+            int c;
+            while ((c = input.read()) != -1)
+                text.append((char) c);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return new Profile(name, age, email, phone);
+        return text.toString();
     }
+
+    public static Profile getProfileInfoFromText(String text){
+        Profile profile = new Profile();
+        if(text.length() >1 ){
+            String[] data = text.split("[\\u0020\\n\\r]");
+            for (int i = 0; i<data.length; i++){
+                if(data[i].isEmpty())
+                    continue;
+                if(data[i].toLowerCase().contains("name")) {
+                    profile.setName(data[i+1]);
+                }else if(data[i].toLowerCase().contains("age")){
+                    profile.setAge(Integer.valueOf(data[i+1]));
+                }else if(data[i].toLowerCase().contains("email")){
+                    profile.setEmail(data[i+1]);
+                }else if(data[i].toLowerCase().contains("phone")){
+                    profile.setPhone(Long.valueOf(data[i+1]));
+                }
+            }
+        }
+        return profile;
+    }
+
 }
